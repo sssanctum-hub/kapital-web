@@ -2,16 +2,41 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Капитал — проба</title>
-<style>html,body{margin:0;height:100%;background:#f2f2f2}</style>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#E9E9E6">
+<meta name="description" content="Капитал — учёт расходов и бюджет на день. Данные хранятся только в этом браузере.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Капитал">
+<title>Капитал</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<style>
+  html, body { margin: 0; height: 100%; background: #E9E9E6; overscroll-behavior: none; }
+  #loading {
+    position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 24px;
+    font: 500 17px/1.4 system-ui, -apple-system, sans-serif; color: #111; text-align: center;
+  }
+</style>
+<script src="kapital-web.js"></script>
 <script>
-  // Wasm GC есть — грузим wasm, иначе запасная сборка на JS.
-  const wasmGc = (() => { try { return WebAssembly.validate(new Uint8Array([0,97,115,109,1,0,0,0,1,5,1,95,1,120,0])); } catch (e) { return false; } })();
-  const s = document.createElement('script');
-  s.src = wasmGc ? 'wasm/spike.js' : 'js/spike.js';
-  document.head.appendChild(s);
+  // Просим браузер не стирать данные без спроса (особенно важно в Safari).
+  if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+  // Работа без интернета после первой загрузки.
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+  // Есть WasmGC — грузим wasm, иначе запасную сборку на JS (например, iOS старше 18.2).
+  const wasmGc = (() => {
+    try { return WebAssembly.validate(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0, 1, 5, 1, 95, 1, 127, 0])); } catch (e) { return false; }
+  })();
+  const script = document.createElement('script');
+  // ?js в адресе — принудительно запасная сборка (для проверки).
+  const forceJs = new URLSearchParams(location.search).has('js');
+  script.src = wasmGc && !forceJs ? 'wasm/kapital.js' : 'js/kapital.js';
+  script.onerror = () => { document.getElementById('loading').textContent = 'Не удалось загрузить Капитал. Проверьте интернет и обновите страницу.'; };
+  document.head.appendChild(script);
 </script>
 </head>
-<body></body>
+<body>
+<div id="loading">Капитал загружается…</div>
+</body>
 </html>

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108">
+  <!-- Как значок Android-приложения: жёлтый круг с «+» на чёрном фоне. -->
+  <rect width="108" height="108" fill="#0E0E10"/>
+  <circle cx="54" cy="54" r="24" fill="#EFF23A"/>
+  <path d="M54,42V66M42,54H66" stroke="#0E0E10" stroke-width="5" stroke-linecap="round" fill="none"/>
+</svg>

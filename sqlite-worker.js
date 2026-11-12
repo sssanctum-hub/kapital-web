@@ -1,4 +1,4 @@
-// Рабочий поток базы: протокол androidx.sqlite WebWorkerSQLiteDriver, хранение — OPFS через opfs-sahpool
+// Рабочий поток базы Капитала: протокол androidx.sqlite WebWorkerSQLiteDriver, хранение — OPFS через opfs-sahpool
 // (не требует заголовков COOP/COEP, работает на GitHub Pages и в Safari 16.4+).
 import sqlite3InitModule from './sqlite/index.mjs';
 
@@ -78,10 +78,23 @@ const queue = [];
 let ready = false;
 onmessage = (e) => { if (ready) handle(e); else queue.push(e); };
 
+// Файлы базы может держать предыдущая страница (перезагрузка) или другая вкладка: несколько секунд пробуем снова.
+async function installPool() {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      // Неудачная попытка запоминается библиотекой, поэтому просим начать заново.
+      return await sqlite3.installOpfsSAHPoolVfs({ name: 'kapital-pool', directory: '/kapital', forceReinitIfPreviouslyFailed: attempt > 0 });
+    } catch (e) {
+      if (attempt >= 20) throw e;
+      await new Promise((resolve) => setTimeout(resolve, 250));
+    }
+  }
+}
+
 sqlite3InitModule()
   .then(async (instance) => {
     sqlite3 = instance;
-    pool = await sqlite3.installOpfsSAHPoolVfs({ name: 'kapital-pool', directory: '/kapital' });
+    pool = await installPool();
   })
   .catch((e) => { initError = 'Хранилище браузера недоступно: ' + (e && e.message || e); })
   .finally(() => { ready = true; while (queue.length) handle(queue.shift()); });
